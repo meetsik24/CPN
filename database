@@ -1,1 +1,3 @@
-SHOW TABLES;
+ALTER TABLE Payment_TransactionsALTER TABLE Payment_Transactions
+MODIFY status VARCHAR(20) NOT NULL DEFAULT 'Pending';
+

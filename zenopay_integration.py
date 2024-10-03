@@ -1,47 +1,55 @@
 import requests
-from fastapi import HTTPException
+import json
+from fastapi import FastAPI, HTTPException
 
-ZENOPAY_API_KEY = "your_zenopay_api_key"
-ZENOPAY_SECRET_KEY = "your_zenopay_secret_key"
-ZENOPAY_BASE_URL = "https://api.zenopay.com"  # Adjust this to Zenopay’s actual API URL
-
-# Function to create a Zenopay payment
-def create_zenopay_payment(amount: float, currency: str = "TZS", customer_email: str = "user@example.com"):
-    try:
-        url = f"{ZENOPAY_BASE_URL}/create-payment"
-        headers = {
-            "Authorization": f"Bearer {ZENOPAY_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "amount": amount,
-            "currency": currency,
-            "customer_email": customer_email,
-            "redirect_url": "https://your-website.com/callback",  # Your callback URL
-            "payment_method": "card"  # Adjust as needed
-        }
-
-        response = requests.post(url, json=payload, headers=headers)
-        response_data = response.json()
-
-        if response.status_code != 200:
-            raise HTTPException(status_code=400, detail="Payment request failed")
-
-        return {"payment_link": response_data.get("payment_link", "https://zenopay.com/fallback")}
+def check_order_status(order_id):
+    # The endpoint URL where the request will be sent
+    endpoint_url = "https://api.zeno.africa/order-status"
     
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Function to handle Zenopay webhook
-async def zenopay_webhook(payload: dict):
+    # Data to be sent in the POST request
+    post_data = {
+        'check_status': 1,
+        'order_id': order_id,
+        'api_key': 'reyfyfufu',
+        'secret_key': 'YOUR SECRET KEY'
+    }
+    
     try:
-        event_type = payload.get("event")
-        if event_type == "payment.success":
-            payment_data = payload.get("data", {})
-            print(f"Payment succeeded for: {payment_data['amount']}")
-            # Update your database or transaction record here
+        # Send the POST request
+        response = requests.post(endpoint_url, data=post_data)
+        
+        # Check if the request was successful
+        response.raise_for_status()
+        
+        # Decode the JSON response
+        response_data = response.json()
+        
+        # Format the response to match the desired structure
+        if response_data.get('status') == 'success':
+            result = {
+                "status": "success",
+                "order_id": response_data.get('order_id'),
+                "message": response_data.get('message'),
+                "payment_status": response_data.get('payment_status')
+            }
+        else:
+            result = {
+                "status": "error",
+                "message": response_data.get('message')
+            }
+        
+        # Print the result in JSON format
+        print(json.dumps(result, indent=4))
+        return result
 
-        return {"status": "success"}
+    except requests.exceptions.RequestException as e:
+        # Handle any request exceptions
+        result = {
+            "status": "error",
+            "message": f"Request error: {str(e)}"
+        }
+        print(json.dumps(result, indent=4))
+        return result
 
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Webhook error: {str(e)}")
+# Example usage
+check_order_status(order_id="123456789")
