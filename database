@@ -1,0 +1,8 @@
+CREATE TABLE transactions (
+    id INT PRIMARY KEY,
+    user_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    PCN VARCHAR(50) NOT NULL,
+    created_at DATE NOT NULL
+);
